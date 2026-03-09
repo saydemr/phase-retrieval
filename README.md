@@ -12,16 +12,83 @@
     Implemented the Single-Distance ICT formula from the referenced paper.
     - Computed the Contrast Transfer Function (CTF) `H(u)`.
     - Inverted the formation model in Fourier space: `F{I_0} = F{I_z} / H(u)`.
-    - Regularization (`alpha`) was added to the denominator to handle frequencies 
-      where `H(u)` approaches zero (zero-crossings), acting like a Wiener filter.
+    - Conditional regularization (`alpha_map`) was added to the denominator. **Derivation is provided below**.
     - Finally, converted the recovered contact intensity `I_0` back to phase `phi`
       and then to thickness `S(x)` using the physical constants.
 
 # Complications
-- The propagation distance was given as 1cm in the initial description but later specified as 20cm. 
-  I chose to implement the 20cm distance as explicitly requested in step 2.2. The paper explicitly talks about earlier methods requiring small propagation distances and ICT being able to work at larger distances, so I wanted to look at the longer propagation distance. Also, using 1cm gave very small variations in the retrieved thickness which was not interesting to me.
+- ~~The propagation distance was given as 1cm in the initial description but later specified as 20cm. I chose to implement the 20cm distance as explicitly requested in step 2.2. The paper explicitly talks about earlier methods requiring small propagation distances and ICT being able to work at larger distances, so I wanted to look at the longer propagation distance. Also, using 1cm gave very small variations in the retrieved thickness which was not interesting to me.~~ Used 0.01m after discussion.
 
-- The formula for converting phase to thickness was not explicitly given, so I found the formula (without the minus sign) in the literature. The negative sign was necessary to ensure the thickness came out positive. I could not find an explicit formula in the referenced paper, though it might be trivial for someone familiar with the topic.
+- ~~The formula for converting phase to thickness was not explicitly given, so I found the formula (without the minus sign) in the literature. The negative sign was necessary to ensure the thickness came out positive. I could not find an explicit formula in the referenced paper, though it might be trivial for someone familiar with the topic.~~ **See below for derivation**.
+
+
+# Regularization of the CTF Function
+In the referenced paper, authors state that they used a conditional regularization approach. 
+They use $\alpha = 0$ for frequencies up to first maximum and $\alpha = 1$ for frequencies above the first maximum, of $H(u)$.
+In the first version of the code, I implemented a simple regularization with a constant $\alpha$ value of 1e-2, assuming that it is a simple constant to avoid division by zero. Turns out that this is not the case, and the paper explicitly states that they used a conditional regularization approach later in the simulation results paragraph.
+
+
+We have:
+
+$$
+H(u) = \cos(\pi\lambda z|u|^{2}) + \frac{\delta}{\beta}\sin(\pi\lambda z|u|^{2})
+$$
+
+Then,
+$$
+\frac{dH}{dA} = -\sin(A) + \frac{\delta}{\beta}\cos(A) = 0, \quad \text{where } A = \pi\lambda z|u|^{2}
+$$
+
+Rearranging the terms gives the condition for the maxima (first extremum is maxima, see [https://www.desmos.com/calculator/9uw9yhy3fm](https://www.desmos.com/calculator/9uw9yhy3fm)):
+
+$$
+\sin(A) = \frac{\delta}{\beta}\cos(A) \implies \tan(A) = \frac{\delta}{\beta}
+$$
+
+Then, we can solve for the spatial frequency at the first peak:
+
+$$
+\pi\lambda z |u|_{peak}^2 = \arctan\left(\frac{\delta}{\beta}\right)
+$$
+
+$$
+|u|_{peak} = \sqrt{\frac{1}{\pi\lambda z} \arctan\left(\frac{\delta}{\beta}\right)}
+$$
+
+
+# Phase to Thickness Conversion
+Given the transmission function in the assignment:
+$$
+T(x) = \exp\left\{-\frac{2\pi}{\lambda} S(x) [\beta + i\delta]\right\}
+$$
+and equation (1) from the paper:
+$$
+T(x) = \exp\left\{-B(x) + i\varphi(x)\right\}
+$$
+
+
+The imaginary parts must be equal.
+$$
+\exp\left\{i\varphi(x)\right\} = \exp\left\{-i \frac{2\pi}{\lambda}\delta S(x)\right\}
+$$
+
+Equating the arguments of the exponential functions:
+
+$$
+i\varphi(x) = -i \frac{2\pi}{\lambda}\delta S(x)
+$$
+
+$$
+\varphi(x) = -\frac{2\pi}{\lambda}\delta S(x)
+$$
+
+Letting the wavenumber $k = \frac{2\pi}{\lambda}$ and isolating $S(x)$ gives:
+
+$$
+S(x) = -\frac{\varphi(x)}{k \delta}
+$$
+
+with the minus sign in the beginning.
 
 
 # Running the Code
