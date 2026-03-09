@@ -12,16 +12,8 @@ BETA = 1e-9                 # refractive index absorption part
 # Geometry parameters
 PIXEL_SIZE = 1e-6           # 1 micrometer (m)
 GRID_SIZE = 512             # N x N pixels
+PROP_DIST = 0.01
 
-## Propagation distance for Fresnel propagation is given in the beginning of
-## the assignment as 1cm, but later asked to be 20cm in step 2.2.
-# PROP_DIST = 0.01          
-PROP_DIST = 0.20            # Propagation distance z = 20 cm (0.2 m) 
-
-
-# Regularization parameter for Phase Retrieval (Wiener-like filter, single distance)
-# Small value to prevent division by zero in the denominator of the ICT formula.
-ALPHA = 1e-2 
 
 # 1. Simulate Transmission Function of a Sphere
 def create_sphere_projection(grid_size, pixel_size, radius_pixels):
@@ -45,7 +37,7 @@ def create_sphere_projection(grid_size, pixel_size, radius_pixels):
 
 # Create the sphere
 # Chose R = 100 pixels to be clearly visible within the 512x512 frame.
-radius_px = 180
+radius_px = 100
 S_x = create_sphere_projection(GRID_SIZE, PIXEL_SIZE, radius_px)
 
 # Compute Complex Transmission Function T(x)
@@ -111,34 +103,44 @@ def ict_phase_retrieval(intensity_z, dist, pixel_size, wavelength, delta, beta, 
     U_sq = U**2 + V**2
     
     # 1. Calculate the Contrast Transfer Function H(u)
-    # H(u) = cos(pi*lambda*z*|u|^2) + (delta/beta)*sin(pi*lambda*z*|u|^2)
+    # H(u) = cos(pi * lambda * z * |u|^2) + (delta / beta) * sin(pi * lambda * z * |u|^2)
     phase_factor = np.pi * wavelength * dist * U_sq
     H_u = np.cos(phase_factor) + (delta / beta) * np.sin(phase_factor)
     
     # 2. Fourier Transform of the measured Intensity
     I_z_hat = fft2(intensity_z)
+
+    # 3. Frequency-Dependent Regularization
+    # The first maximum of H(u) occurs when tan(A) = delta/beta.
+    # We find the spatial frequency squared |u|^2 corresponding to this peak.
+    # see Readme for detailed derivation.
+    # np.arctan returns values in (-pi/2, pi/2). Since delta / beta > 0, result is positive.
+    u_sq_peak = np.arctan(delta / beta) / (np.pi * wavelength * dist)
     
-    # 3. Inversion (Regularized Division)
+    # Create the alpha map
+    # alpha = 0 for frequencies below the first peak 
+    # alpha = 1 for frequencies above the first peak 
+    # no square root needed since we are comparing U_sq directly to u_sq_peak
+    alpha_map = np.where(U_sq <= u_sq_peak, 0.0, 1.0)
+
+    # 4. Inversion (Regularized Division)
     # We recover FFT{I_0} using Eq (9) with M=1
     # F{I_0} = (H(u) * F{I_z}) / (H(u)^2 + alpha)
     numerator = H_u * I_z_hat
-    denominator = H_u**2 + alpha
+    denominator = H_u**2 + alpha_map
     I_0_hat = numerator / denominator
     
-    # 4. Inverse FFT to get retrieved contact intensity I_0
+    # 5. Inverse FFT to get retrieved contact intensity I_0
     I_0_rec = np.real(ifft2(I_0_hat))
     
     # Clip to avoid log of negative numbers
     I_0_rec = np.clip(I_0_rec, 1e-10, None)
     
-    # 5. Retrieve Phase phi(x)
+    # 6. Retrieve Phase phi(x)
     # Formula Eq (8)-(9): phi(x) = (delta / 2*beta) * ln(I_0_rec)
     phi_rec = (delta / (2 * beta)) * np.log(I_0_rec)
     
-    # 6. Convert Phase to Thickness S(x)
-    
-    # I found the formula without the minus sign in the literature, but without it the length comes out negative.
-    # I could not find an explicit formula in Farago et al.. It might be trivial for someone familiar with the topic.
+    # 7. Convert Phase to Thickness S(x)
     # phi(x) = -k * delta * S(x)
     # So: S(x) = -phi(x) / (k * delta)
     k = 2 * np.pi / wavelength
@@ -196,3 +198,7 @@ plt.ylabel("Phase Shift (radians)")
 plt.legend()
 plt.grid(True, alpha=0.3)
 plt.show()
+
+
+print(f"Max True Thickness: {np.max(S_x)*1e6:.4f} um")
+print(f"Max Rec Thickness:  {np.max(S_reconstructed)*1e6:.4f} um")
