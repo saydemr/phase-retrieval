@@ -90,7 +90,7 @@ I_z = np.abs(U_z)**2
 
 # 3. Phase Retrieval (Inverse Model)
 # Intensity Contrast Transfer (ICT) in Farago et al., Optics Letters 49, 18, 5159, Eq. 9 (adapted for single distance, i.e. M=1)
-def ict_phase_retrieval(intensity_z, dist, pixel_size, wavelength, delta, beta, alpha):
+def ict_phase_retrieval(intensity_z, dist, pixel_size, wavelength, delta, beta):
     """
     Retrieves the object phase/thickness using the ICT formula.
     """
@@ -149,7 +149,7 @@ def ict_phase_retrieval(intensity_z, dist, pixel_size, wavelength, delta, beta, 
     return S_rec
 
 # Perform retrieval
-S_reconstructed = ict_phase_retrieval(I_z, PROP_DIST, PIXEL_SIZE, WAVELENGTH, DELTA, BETA, ALPHA)
+S_reconstructed = ict_phase_retrieval(I_z, PROP_DIST, PIXEL_SIZE, WAVELENGTH, DELTA, BETA)
 
 
 ## 4. Visualization
@@ -176,14 +176,26 @@ plt.colorbar(im3, ax=axes[2], fraction=0.046, pad=0.04)
 plt.tight_layout()
 plt.show()
 
+# put cross-section plots below to a figure with 2 rows and 1 column
+
+fig, axes = plt.subplots(2, 1, figsize=(10, 10))
+
+
 # Cross-section comparison
 mid = GRID_SIZE // 2
-plt.figure(figsize=(10, 5))
-plt.plot(S_x[mid, :] * 1e6, 'k--', label='True Thickness', linewidth=2)
-plt.plot(S_reconstructed[mid, :] * 1e6, 'r-', label='Reconstructed (ICT)', alpha=0.7)
-plt.title(f"Cross-section Profile Comparison, z={PROP_DIST*100:.0f}cm")
-plt.xlabel("Pixel Index")
-plt.ylabel(r"Thickness [$\mu$m]")
+axes[0].plot(S_x[mid, :] * 1e6, 'k--', label='True Thickness', linewidth=2)
+axes[0].plot(S_reconstructed[mid, :] * 1e6, 'r-', label='Reconstructed (ICT)', alpha=0.7)
+axes[0].set_title(f"Cross-section Profile Comparison, z={PROP_DIST*100:.0f}cm")
+axes[0].set_xlabel("Pixel Index")
+axes[0].set_ylabel(r"Thickness [$\mu$m]")
+
+# cross section comparison, around the center of the sphere, with 16 pixel width
+axes[1].plot(range(240,272), S_x[mid, 240:272] * 1e6, 'k--', label='True Thickness', linewidth=2)
+axes[1].plot(range(240,272), S_reconstructed[mid, 240:272] * 1e6, 'r-', label='Reconstructed (ICT)', alpha=0.7)
+axes[1].set_title(f"Zoomed Cross-section Profile Comparison, z={PROP_DIST*100:.0f}cm")
+axes[1].set_xlabel("Pixel Index")
+axes[1].set_ylabel(r"Thickness [$\mu$m]")
+
 plt.legend()
 plt.grid(True, alpha=0.3)
 plt.show()
