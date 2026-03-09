@@ -22,3 +22,16 @@
   I chose to implement the 20cm distance as explicitly requested in step 2.2. The paper explicitly talks about earlier methods requiring small propagation distances and ICT being able to work at larger distances, so I wanted to look at the longer propagation distance. Also, using 1cm gave very small variations in the retrieved thickness which was not interesting to me.
 
 - The formula for converting phase to thickness was not explicitly given, so I found the formula (without the minus sign) in the literature. The negative sign was necessary to ensure the thickness came out positive. I could not find an explicit formula in Farago et al., it might be trivial for someone familiar with the topic.
+
+
+# Running the Code
+pyproject.toml contains the dependencies. You can install them using uv:
+```bash
+uv install
+```
+To run the code, execute:
+```bash
+uv run main.py
+```
+This will generate the plots for the simulated intensity and the retrieved thickness.
+If you do not have uv, you can install it from [https://docs.astral.sh/uv/getting-started/installation/](https://docs.astral.sh/uv/getting-started/installation/).

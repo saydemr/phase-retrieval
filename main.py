@@ -15,8 +15,8 @@ GRID_SIZE = 512             # N x N pixels
 
 ## Propagation distance for Fresnel propagation is given in the beginning of
 ## the assignment as 1cm, but later asked to be 20cm in step 2.2.
-PROP_DIST = 0.01          
-# PROP_DIST = 0.20            # Propagation distance z = 20 cm (0.2 m) 
+# PROP_DIST = 0.01          
+PROP_DIST = 0.20            # Propagation distance z = 20 cm (0.2 m) 
 
 
 # Regularization parameter for Phase Retrieval (Wiener-like filter, single distance)
