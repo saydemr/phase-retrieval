@@ -176,11 +176,8 @@ plt.colorbar(im3, ax=axes[2], fraction=0.046, pad=0.04)
 plt.tight_layout()
 plt.show()
 
-# put cross-section plots below to a figure with 2 rows and 1 column
 
 fig, axes = plt.subplots(2, 1, figsize=(10, 10))
-
-
 # Cross-section comparison
 mid = GRID_SIZE // 2
 axes[0].plot(S_x[mid, :] * 1e6, 'k--', label='True Thickness', linewidth=2)
