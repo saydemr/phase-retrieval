@@ -35,6 +35,7 @@ H(u) = \cos(\pi\lambda z|u|^{2}) + \frac{\delta}{\beta}\sin(\pi\lambda z|u|^{2})
 $$
 
 Then,
+
 $$
 \frac{dH}{dA} = -\sin(A) + \frac{\delta}{\beta}\cos(A) = 0, \quad \text{where } A = \pi\lambda z|u|^{2}
 $$
@@ -58,16 +59,20 @@ $$
 
 # Phase to Thickness Conversion
 Given the transmission function in the assignment:
+
 $$
 T(x) = \exp\left\{-\frac{2\pi}{\lambda} S(x) [\beta + i\delta]\right\}
 $$
+
 and equation (1) from the paper:
+
 $$
 T(x) = \exp\left\{-B(x) + i\varphi(x)\right\}
 $$
 
 
 The imaginary parts must be equal.
+
 $$
 \exp\left\{i\varphi(x)\right\} = \exp\left\{-i \frac{2\pi}{\lambda}\delta S(x)\right\}
 $$
