@@ -74,7 +74,7 @@ $$
 The imaginary parts must be equal.
 
 $$
-\exp\left\lbrace i\varphi(x)\right\rbrace} = \exp\left\lbrace -i \frac{2\pi}{\lambda}\delta S(x)\right\rbrace
+\exp\left\lbrace i\varphi(x)\right\rbrace = \exp\left\lbrace -i \frac{2\pi}{\lambda}\delta S(x)\right\rbrace
 $$
 
 Equating the arguments of the exponential functions:
