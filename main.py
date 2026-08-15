@@ -4,7 +4,7 @@ from numpy.fft import fft2, ifft2, fftfreq
 
 ## Simulation Parameters
 # Physical constants
-WAVELENGTH = 1e-10          # wavelength (m)
+WAVELENGTH = 1e-10          # wavelength (m) lambda
 WAVENUMBER = 2 * np.pi / WAVELENGTH
 DELTA = 1e-7                # refractive index decrement
 BETA = 1e-9                 # refractive index absorption part
@@ -72,7 +72,7 @@ def fresnel_propagate(wavefront, dist, pixel_size, wavelength):
     # The assignment asks for P_tilde(u) = exp(-i * pi * lambda * z * |u|^2)
     propagator = np.exp(-1j * np.pi * wavelength * dist * U_sq)
     
-    # Perform Propagation: IFFT( FFT(T) * P )
+    # Perform Propagation: IFFT( FFT(T) * P_tilde(u) )
     ft_wavefront = fft2(wavefront_padded)
     ft_prop = ft_wavefront * propagator
     wavefront_z = ifft2(ft_prop)
@@ -80,10 +80,10 @@ def fresnel_propagate(wavefront, dist, pixel_size, wavelength):
     # Crop back to original size
     start = pad_width
     end = start + N
-    return wavefront_z[start:end, start:end]
+    return wavefront_z[start:end, start:end], propagator
 
 # Propagate wavefield
-U_z = fresnel_propagate(T_x, PROP_DIST, PIXEL_SIZE, WAVELENGTH)
+U_z, propagator = fresnel_propagate(T_x, PROP_DIST, PIXEL_SIZE, WAVELENGTH)
 
 # Compute Intensity I_z(x) = |U_z(x)|^2
 I_z = np.abs(U_z)**2
@@ -116,7 +116,11 @@ def ict_phase_retrieval(intensity_z, dist, pixel_size, wavelength, delta, beta):
     # see Readme for detailed derivation.
     # np.arctan returns values in (-pi/2, pi/2). Since delta / beta > 0, result is positive.
     u_sq_peak = np.arctan(delta / beta) / (np.pi * wavelength * dist)
-    
+    print(f"{u_sq_peak:20.16f}")
+    print(np.pi)
+    # print value at the peak for reference
+    print(f"H(u) at peak frequency: {np.cos(np.arctan(delta / beta)) + (delta / beta) * np.sin(np.arctan(delta / beta)):6.16f}")
+
     # Create the alpha map
     # alpha = 0 for frequencies below the first peak 
     # alpha = 1 for frequencies above the first peak 
@@ -146,10 +150,10 @@ def ict_phase_retrieval(intensity_z, dist, pixel_size, wavelength, delta, beta):
     k = 2 * np.pi / wavelength
     S_rec = -phi_rec / (k * delta)
     
-    return S_rec
+    return S_rec, I_0_hat, I_0_rec
 
 # Perform retrieval
-S_reconstructed = ict_phase_retrieval(I_z, PROP_DIST, PIXEL_SIZE, WAVELENGTH, DELTA, BETA)
+S_reconstructed, I_0_hat, I_0_rec = ict_phase_retrieval(I_z, PROP_DIST, PIXEL_SIZE, WAVELENGTH, DELTA, BETA)
 
 
 ## 4. Visualization
@@ -209,5 +213,41 @@ plt.grid(True, alpha=0.3)
 plt.show()
 
 
-print(f"Max True Thickness: {np.max(S_x)*1e6:.4f} um")
-print(f"Max Rec Thickness:  {np.max(S_reconstructed)*1e6:.4f} um")
+print(f"Max True Thickness: {np.max(S_x)*1e6:.16f} um")
+print(f"Max Rec Thickness:  {np.max(S_reconstructed)*1e6:.16f} um"),
+
+# U_z, I_z, I_0_hat, I_0_rec
+fig, axes = plt.subplots(2, 2, figsize=(10, 10))
+axes[0, 0].imshow(U_z.real, cmap='gray')
+axes[0, 0].set_title("Propagated Wavefield U_z (complex)")
+axes[0, 1].imshow(I_z, cmap='gray')
+axes[0, 1].set_title("Simulated Intensity I_z")
+axes[1, 0].imshow(I_0_hat.real, cmap='gray')
+axes[1, 0].set_title("ICT Recovered F{I_0}")
+axes[1, 1].imshow(I_0_rec, cmap='gray')
+axes[1, 1].set_title("ICT Recovered I_0")
+plt.tight_layout()
+plt.show()
+
+u = fftfreq(GRID_SIZE, d=PIXEL_SIZE)
+v = fftfreq(GRID_SIZE, d=PIXEL_SIZE)
+U, V = np.meshgrid(u, v)
+U_sq = U**2 + V**2
+phase_factor = np.pi * WAVELENGTH * PROP_DIST * U_sq
+H_u = np.cos(phase_factor) + (DELTA / BETA) * np.sin(phase_factor)
+
+
+H_u_shifted = np.fft.fftshift(H_u)
+
+# true physical frequency bounds nyquist frequency is 1/(2*pixel_size) in each direction
+f_max = 1 / (2 * PIXEL_SIZE) 
+
+fig, ax = plt.subplots(figsize=(7, 6))
+im = ax.imshow(H_u_shifted, cmap='gray', extent=[-f_max, f_max, -f_max, f_max])
+ax.set_title("Contrast Transfer Function H(u)\nin Fourier Space")
+ax.set_xlabel("u (cycles/m)")
+ax.set_ylabel("v (cycles/m)")
+plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+
+plt.tight_layout()
+plt.show()

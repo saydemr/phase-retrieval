@@ -1,3 +1,8 @@
+# ICT Phase Retrieval Implementation
+
+Implementation of the functions in [*"Phase retrieval in propagation-based X-ray imaging beyond the limits of transport of intensity and contrast transfer function approaches"*](https://doi.org/10.1364/OL.530330) by Faragó et. al. (2024). The code simulates a sphere and retrieves its thickness from the simulated intensity using the ICT method.  
+
+
 # Explanation of Steps
 1.  **Simulation (`S(x)` & `T(x)`)**: Modeled a sphere by calculating the chord length 
     at each pixel. The complex transmission `T(x)` combines attenuation (beta) and 
@@ -15,11 +20,6 @@
     - Conditional regularization (`alpha_map`) was added to the denominator. **Derivation is provided below**.
     - Finally, converted the recovered contact intensity `I_0` back to phase `phi`
       and then to thickness `S(x)` using the physical constants.
-
-# Complications
-- ~~The propagation distance was given as 1cm in the initial description but later specified as 20cm. I chose to implement the 20cm distance as explicitly requested in step 2.2. The paper explicitly talks about earlier methods requiring small propagation distances and ICT being able to work at larger distances, so I wanted to look at the longer propagation distance. Also, using 1cm gave very small variations in the retrieved thickness which was not interesting to me.~~ Used 0.01m after discussion.
-
-- ~~The formula for converting phase to thickness was not explicitly given, so I found the formula (without the minus sign) in the literature. The negative sign was necessary to ensure the thickness came out positive. I could not find an explicit formula in the referenced paper, though it might be trivial for someone familiar with the topic.~~ **See below for derivation**.
 
 
 # Regularization of the CTF Function
@@ -61,20 +61,20 @@ $$
 Given the transmission function in the assignment:
 
 $$
-T(x) = \exp\left\{-\frac{2\pi}{\lambda} S(x) [\beta + i\delta]\right\}
+T(x) = \exp\left\lbrace-\frac{2\pi}{\lambda} S(x) [\beta + i\delta]\right\rbrace
 $$
 
 and equation (1) from the paper:
 
 $$
-T(x) = \exp\left\{-B(x) + i\varphi(x)\right\}
+T(x) = \exp\left\lbrace-B(x) + i\varphi(x)\right\rbrace
 $$
 
 
 The imaginary parts must be equal.
 
 $$
-\exp\left\{i\varphi(x)\right\} = \exp\left\{-i \frac{2\pi}{\lambda}\delta S(x)\right\}
+\exp\left\{i\varphi(x)\right\} = \exp\left\lbrace-i \frac{2\pi}{\lambda}\delta S(x)\right\rbrace
 $$
 
 Equating the arguments of the exponential functions:
